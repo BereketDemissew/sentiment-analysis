@@ -13,6 +13,8 @@ import trainModel
 import lexigraphicOrder
 import checkpoints
 import makeLists
+import makeLinearGraphs
+import calculateAccuracy
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class reviewer(nn.Module): # new porblem found: high af loss 1/10
@@ -57,15 +59,39 @@ previousTrainingLoops = 0
 
 
 # loads model and optimizer from checkpoint
-checkpoint = input("Would you like to load a checkpoint? (y/n): ")
-if (checkpoint == 'y'):
+loadCheckpoint = input("Would you like to load a checkpoint? (y/n): ")
+if (loadCheckpoint == 'y'):
     [model, optimizer, trainingLosses, validationLosses, previousTrainingLoops] = checkpoints.loadCheckpoint(model, optimizer, device)
-
 start_model = time.time()
-[my_model, fileName] = trainModel.training_loop(model, optimizer, vocab, padded, score, val_review, val_score, test_review, test_score, trainingLosses, validationLosses, previousTrainingLoops, device)
+checkpoint = trainModel.training_loop(model, optimizer, vocab, padded, score, val_review, val_score, test_review, test_score, trainingLosses, validationLosses, previousTrainingLoops, device)
 end_model = time.time()
-
 print(f"takes {end_model - start_model} seconds for training")
+
+loops = checkpoint['loops']
+trainingLosses = checkpoint['trainingLosses']
+validationLosses = checkpoint['validationLosses']
+
+checkpoint['model'] = model.state_dict()
+checkpoint['optimizer'] = optimizer.state_dict()
+# model = checkpoint['model']
+# optimizer = checkpoint['optimizer']
+# loops = checkpoint['loops']
+# trainingLosses = checkpoint['trainingLosses']
+# validationLosses = checkpoint['validationLosses']
+
+# model.load_state_dict(checkpoint['model'])
+# model = model.to(device)
+# optimizer.load_state_dict(checkpoint['optimizer'])
+# trainingLosses = checkpoint.get('trainingLosses', []) # saves an empty list if losses is missing
+# validationLosses = checkpoint.get('validationLosses', [])
+# numTrainingLoops = checkpoint.get('loops', 0)
+
+makeLinearGraphs.makeLinearGraph(trainingLosses, validationLosses, loops)
+# test dataset/accuracy
+calculateAccuracy.compute_accuracy(model, test_review, test_score, loops, device)
+
+checkpoints.saveCheckpoint(checkpoint, loops + previousTrainingLoops)
+
 
 # print("Do you want to test the data with input data or some training data?")
 # answer = input()

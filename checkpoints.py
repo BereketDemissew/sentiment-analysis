@@ -9,7 +9,6 @@ def saveCheckpoint(checkpoint, loops):
     fileName = f"model{counter}_{loops}loops.pth.tar"
     torch.save(checkpoint, fileName)
     print(f"dipstick model saved as {fileName}")
-    return fileName
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def loadCheckpoint(model, optimizer, device):
     while True:

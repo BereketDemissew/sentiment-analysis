@@ -10,7 +10,7 @@ def training_loop(model, optimizer, vocab, padding, updated_score, val_review, v
     #training loop
     batch_size = 512
     loss_function = nn.BCELoss()
-    loops = 2
+    loops = 10
     # trainingLosses = []
     # validationLosses = []
     val_batch = int(batch_size * 0.8)
@@ -55,19 +55,14 @@ def training_loop(model, optimizer, vocab, padding, updated_score, val_review, v
 
         if (epoch % 10 == 9):
           print(f"{epoch + 1 + previousTrainingLoops} epochs completed -- training loss: {round(trainingLosses[-1], 2)} -- validation loss: {round(validationLosses[-1], 2)}")
-
-    makeLinearGraphs.makeLinearGraph(trainingLosses, validationLosses, loops + previousTrainingLoops)
-
-    # test dataset/accuracy
-    calculateAccuracy.compute_accuracy(model, test_review, test_score, loops, device)
     checkpoint = {
-        'model': model.state_dict(),
-        'optimizer': optimizer.state_dict(),
-        'loops': loops + previousTrainingLoops,
-        'trainingLosses': trainingLosses,
-        'validationLosses': validationLosses
+    # 'model': model.state_dict(),
+    # 'optimizer': optimizer.state_dict(),
+    'loops': loops + previousTrainingLoops,
+    'trainingLosses': trainingLosses,
+    'validationLosses': validationLosses
     }
-    fileName = checkpoints.saveCheckpoint(checkpoint, loops + previousTrainingLoops)
-
+    
     # if lowest is below 0.4 change how it works for later
-    return model, fileName
+    # return checkpoint
+    return checkpoint

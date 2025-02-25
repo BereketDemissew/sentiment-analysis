@@ -1,5 +1,5 @@
 # sentiment-analysis
-My sentiment analysis model is a supervised embedding neural network designed to classify text sentiment from Kaggle datasets, which include both Steam Reviews and movie reviews. The model uses embeddings to convert raw text into dense vector representations, allowing it to capture the subtle semantic relationships between words and phrases.
+This sentiment analysis model is a supervised embedding neural network designed to classify text sentiment from Kaggle datasets, which include both Steam Reviews and movie reviews. The model uses embeddings to convert raw text into dense vector representations, allowing it to capture the subtle semantic relationships between words and phrases.
 
 **Data Sources & Preprocessing:**
 Steam Reviews: These reviews are rich with emojis, extraneous characters, and a distinct, often sarcastic tone typical of gaming communities. This noise makes them more challenging to clean and preprocess.

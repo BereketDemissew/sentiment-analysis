@@ -31,34 +31,6 @@ class reviewer(nn.Module): # new porblem found: high af loss 1/10
     sig = self.sig(lin)
     return sig
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-def testing_input(review, model):
-    keep_going = True
-    while keep_going:
-        examples = input("Give me a review: ")
-        examples = examples.split()
-        hashing2 = lexigraphicOrder.lex_order_new(review, examples)
-        # Let's encode these strings as numbers using the dictionary from earlier
-        padder = []
-        lister = []
-        for word in examples:
-            lister.append(hashing2[word])
-        padder.append(torch.tensor(lister))
-
-        testing_tensor = torch.nn.utils.rnn.pad_sequence(padder, batch_first=True)
-        model.eval()
-
-        if model(testing_tensor).item() < 0.5:
-            print("Sounds like a negative reviewer is afoot")
-        elif model(testing_tensor).item() >= 0.5:
-            print("Somebody is brimming with positivity")
-        else:
-            print("Not to hot not to cold")
-        print(model(testing_tensor))
-
-        awnser = input("Do you want to try again?:  ")
-        if awnser not in {"yes", "y"}:
-            keep_going = False
-#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def testing_doc(model):
     answers = []
 
@@ -131,7 +103,6 @@ if loops != previousTrainingLoops: # only runs if training loops > 0
     # checkpoints.saveCheckpoint(checkpoint, loops)
 if manuallyTestReviews:
     manualTestingReviews.testing_input(hashing, model, padd_width) # Broken, need to fix
-    # testing_input(review, model, padd_width)
 print('goodbye world...')
 os.system('shutdown -s')
 print("done")

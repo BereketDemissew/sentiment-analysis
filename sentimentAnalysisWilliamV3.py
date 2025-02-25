@@ -1,12 +1,9 @@
 import csv
-import numpy as np
 import torch
 import torch.nn as nn
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 import time
-import matplotlib.pyplot as plt
-import re
-import glob
+import os
 
 # File imports
 import trainModel
@@ -15,6 +12,8 @@ import checkpoints
 import makeLists
 import makeLinearGraphs
 import calculateAccuracy
+import sendEmail
+import manualTestingReviews
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class reviewer(nn.Module): # new porblem found: high af loss 1/10
@@ -32,7 +31,59 @@ class reviewer(nn.Module): # new porblem found: high af loss 1/10
     sig = self.sig(lin)
     return sig
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def testing_input(review, model):
+    keep_going = True
+    while keep_going:
+        examples = input("Give me a review: ")
+        examples = examples.split()
+        hashing2 = lexigraphicOrder.lex_order_new(review, examples)
+        # Let's encode these strings as numbers using the dictionary from earlier
+        padder = []
+        lister = []
+        for word in examples:
+            lister.append(hashing2[word])
+        padder.append(torch.tensor(lister))
 
+        testing_tensor = torch.nn.utils.rnn.pad_sequence(padder, batch_first=True)
+        model.eval()
+
+        if model(testing_tensor).item() < 0.5:
+            print("Sounds like a negative reviewer is afoot")
+        elif model(testing_tensor).item() >= 0.5:
+            print("Somebody is brimming with positivity")
+        else:
+            print("Not to hot not to cold")
+        print(model(testing_tensor))
+
+        awnser = input("Do you want to try again?:  ")
+        if awnser not in {"yes", "y"}:
+            print("ARE YOU DOUBLE SURE YOU'RE DONE?")
+            awnser = input()
+
+            if awnser not in {"yes", "y"}:
+                print("ok you are")
+                keep_going = False
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def testing_doc(model):
+    answers = []
+
+    with open('IMDB Dataset.csv', encoding='utf-8') as csvfile: # reading in our testing training data
+        reader = csv.DictReader(csvfile)
+        lister = []
+        padding = []
+        for row in reader:
+                review = row['review']
+                if row['sentiment'] == "positive":
+                    answers.append(1)
+                else:
+                    answers.append(0)
+
+                for word in review:
+                    lister.append(word)
+                padding.append(torch.tensor(lister))
+                testing_tensor = torch.nn.utils.rnn.pad_sequence(padding, batch_first=True)
+                model.eval()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # make lists code
 start_lister = time.time()
@@ -56,7 +107,7 @@ optimizer = torch.optim.Adam(model.parameters())
 trainingLosses = []
 validationLosses = []
 previousTrainingLoops = 0
-
+manuallyTestReviews = True
 
 # loads model and optimizer from checkpoint
 loadCheckpoint = input("Would you like to load a checkpoint? (y/n): ")
@@ -70,31 +121,19 @@ print(f"takes {end_model - start_model} seconds for training")
 loops = checkpoint['loops']
 trainingLosses = checkpoint['trainingLosses']
 validationLosses = checkpoint['validationLosses']
+checkpoint['model'] = model.state_dict() # doesn't change in training_loop so just adding to checkpoint manually
+checkpoint['optimizer'] = optimizer.state_dict() # doesn't change in training_loop so just adding to checkpoint manually
+if loops != previousTrainingLoops: # only runs if training loops > 0
+    print('running line 127')
+    pngFileName = makeLinearGraphs.makeLinearGraph(trainingLosses, validationLosses, loops) # make plot of training and validation from loops
+    accuracy = calculateAccuracy.compute_accuracy(model, test_review, test_score, loops, device) # test dataset/accuracy
+    try:
+        sendEmail.sendEmail(loops, round(trainingLosses[-1], 2), round(validationLosses[-1], 2), True, pngFileName, accuracy)
+    except:
+        print("unable to connect to server")
+    checkpoints.saveCheckpoint(checkpoint, loops)
+if manuallyTestReviews:
+    manualTestingReviews.testing_input(review, model, padd_width) # Broken, need to fix
 
-checkpoint['model'] = model.state_dict()
-checkpoint['optimizer'] = optimizer.state_dict()
-# model = checkpoint['model']
-# optimizer = checkpoint['optimizer']
-# loops = checkpoint['loops']
-# trainingLosses = checkpoint['trainingLosses']
-# validationLosses = checkpoint['validationLosses']
-
-# model.load_state_dict(checkpoint['model'])
-# model = model.to(device)
-# optimizer.load_state_dict(checkpoint['optimizer'])
-# trainingLosses = checkpoint.get('trainingLosses', []) # saves an empty list if losses is missing
-# validationLosses = checkpoint.get('validationLosses', [])
-# numTrainingLoops = checkpoint.get('loops', 0)
-
-makeLinearGraphs.makeLinearGraph(trainingLosses, validationLosses, loops)
-# test dataset/accuracy
-calculateAccuracy.compute_accuracy(model, test_review, test_score, loops, device)
-
-checkpoints.saveCheckpoint(checkpoint, loops + previousTrainingLoops)
-
-
-# print("Do you want to test the data with input data or some training data?")
-# answer = input()
-# if answer in {"input"}:
-#     testing_input(review, my_model)
+os.system('shutdown -s')
 print("done")

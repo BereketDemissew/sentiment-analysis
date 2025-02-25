@@ -9,8 +9,6 @@ def training_loop(model, optimizer, padding, updated_score, val_review, val_scor
     batch_size = 512
     loss_function = nn.BCELoss()
     loops = 1
-    # trainingLosses = []
-    # validationLosses = []
     val_batch = int(batch_size * 0.8)
     print(f'beginning training {loops} loops')
     for epoch in range(loops):

@@ -57,12 +57,7 @@ def testing_input(review, model):
 
         awnser = input("Do you want to try again?:  ")
         if awnser not in {"yes", "y"}:
-            print("ARE YOU DOUBLE SURE YOU'RE DONE?")
-            awnser = input()
-
-            if awnser not in {"yes", "y"}:
-                print("ok you are")
-                keep_going = False
+            keep_going = False
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def testing_doc(model):
     answers = []
@@ -103,7 +98,7 @@ print(f"takes {round(end_lex - start_lex, 2)} seconds to make the lex order")
 # moved some of training loop function out to allow loadCheckpoint to work
 model = reviewer(vocab, 256)
 model = model.to(device)
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters()) # automatic gradient descent
 trainingLosses = []
 validationLosses = []
 previousTrainingLoops = 0
@@ -114,26 +109,29 @@ loadCheckpoint = input("Would you like to load a checkpoint? (y/n): ")
 if (loadCheckpoint == 'y'):
     [model, optimizer, trainingLosses, validationLosses, previousTrainingLoops] = checkpoints.loadCheckpoint(model, optimizer, device)
 start_model = time.time()
-checkpoint = trainModel.training_loop(model, optimizer, vocab, padded, score, val_review, val_score, test_review, test_score, trainingLosses, validationLosses, previousTrainingLoops, device)
+checkpoint = trainModel.training_loop(model, optimizer, padded, score, val_review, val_score, trainingLosses, validationLosses, previousTrainingLoops, device)
 end_model = time.time()
 print(f"takes {end_model - start_model} seconds for training")
 
 loops = checkpoint['loops']
+print("total loops:", loops)
 trainingLosses = checkpoint['trainingLosses']
 validationLosses = checkpoint['validationLosses']
+print('trainingLosses length:', len(trainingLosses))
+print('validationLosses length:', len(validationLosses))
 checkpoint['model'] = model.state_dict() # doesn't change in training_loop so just adding to checkpoint manually
 checkpoint['optimizer'] = optimizer.state_dict() # doesn't change in training_loop so just adding to checkpoint manually
 if loops != previousTrainingLoops: # only runs if training loops > 0
-    print('running line 127')
     pngFileName = makeLinearGraphs.makeLinearGraph(trainingLosses, validationLosses, loops) # make plot of training and validation from loops
     accuracy = calculateAccuracy.compute_accuracy(model, test_review, test_score, loops, device) # test dataset/accuracy
-    try:
-        sendEmail.sendEmail(loops, round(trainingLosses[-1], 2), round(validationLosses[-1], 2), True, pngFileName, accuracy)
-    except:
-        print("unable to connect to server")
-    checkpoints.saveCheckpoint(checkpoint, loops)
+    # try:
+    #     sendEmail.sendEmail(loops, round(trainingLosses[-1], 2), round(validationLosses[-1], 2), True, pngFileName, accuracy)
+    # except:
+    #     print("unable to connect to server")
+    # checkpoints.saveCheckpoint(checkpoint, loops)
 if manuallyTestReviews:
-    manualTestingReviews.testing_input(review, model, padd_width) # Broken, need to fix
-
+    manualTestingReviews.testing_input(hashing, model, padd_width) # Broken, need to fix
+    # testing_input(review, model, padd_width)
+print('goodbye world...')
 os.system('shutdown -s')
 print("done")

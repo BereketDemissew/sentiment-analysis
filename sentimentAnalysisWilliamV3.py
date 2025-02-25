@@ -96,11 +96,11 @@ checkpoint['optimizer'] = optimizer.state_dict() # doesn't change in training_lo
 if loops != previousTrainingLoops: # only runs if training loops > 0
     pngFileName = makeLinearGraphs.makeLinearGraph(trainingLosses, validationLosses, loops) # make plot of training and validation from loops
     accuracy = calculateAccuracy.compute_accuracy(model, test_review, test_score, loops, device) # test dataset/accuracy
-    # try:
-    #     sendEmail.sendEmail(loops, round(trainingLosses[-1], 2), round(validationLosses[-1], 2), True, pngFileName, accuracy)
-    # except:
-    #     print("unable to connect to server")
-    # checkpoints.saveCheckpoint(checkpoint, loops)
+    try:
+        sendEmail.sendEmail(loops, round(trainingLosses[-1], 2), round(validationLosses[-1], 2), True, pngFileName, accuracy)
+    except:
+        print("unable to connect to server")
+    checkpoints.saveCheckpoint(checkpoint, loops)
 if manuallyTestReviews:
     manualTestingReviews.testing_input(hashing, model, padd_width) # Broken, need to fix
 print('goodbye world...')

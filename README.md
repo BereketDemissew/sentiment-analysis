@@ -8,3 +8,5 @@ Movie Reviews: Compared to Steam reviews, movie reviews are generally cleaner an
 **Model Training & Performance:**
 Over the course of 401 training loops (as shown in our accompanying PNG file), our model achieved an accuracy just above 90%.
 The validation curve did not plateau, which suggests that the model had not yet overfit the training data, indicating promising generalization capabilities.
+
+Originally, the model was unoptimized and would run for about 8 hours to train off the steam reviews and would only achieve 50%, which is not the expected result for a boolean output. Now, with the optimized model, we achieve 90%.

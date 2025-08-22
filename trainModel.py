@@ -5,16 +5,17 @@ import datetime
 
 # File imports
 import sendEmail
+import calculateAccuracy
 
-def training_loop(model, optimizer, padding, updated_score, val_review, val_score, trainingLosses, validationLosses, previousTrainingLoops, device):
+def training_loop(model, optimizer, scheduler, padding, updated_score, val_review, val_score, trainingLosses, validationLosses, previousTrainingLoops, test_review, test_score, accuracyList, device):
     #training loop
     batch_size = 512
-    loss_function = nn.BCELoss()
+    loss_function = nn.BCEWithLogitsLoss() # handles sigmoid interally in a numerically stable way rather than nn.BCELoss()
     # epochs = 1
     val_batch = int(batch_size * 0.8)
     print('beginning training now')
     startTime = time.time()
-    for epochs in range(1, 301):
+    for epochs in range(1, 201):
         randperm = torch.randperm(len(padding)) # so model recognizes patterns from batch across the board and not each specific batch
         padding, updated_score = padding[randperm].to(device), updated_score[randperm].to(device)
         model.train()
@@ -27,14 +28,15 @@ def training_loop(model, optimizer, padding, updated_score, val_review, val_scor
             pred = model(mini_batch)
             loss = loss_function(pred, mini_batch_labels)
 
+            # Back Propogation!!
             optimizer.zero_grad()
-
             loss.backward()
             optimizer.step()
+            
             total_loss += loss.item()
         trainingLosses.append(total_loss / (len(padding) // batch_size))
-
-        # back propogation for validation
+        
+        # validation, just used for human understanding of model performance, does not affect model
         with torch.no_grad():
             val_randomperm = torch.randperm(len(val_review))
             val_review = val_review[val_randomperm]
@@ -50,13 +52,22 @@ def training_loop(model, optimizer, padding, updated_score, val_review, val_scor
                 loss_val = loss_function(pred, mini_batch_labels_val)
                 val_loss += loss_val.item()
             validationLosses.append(val_loss / (len(val_review) // val_batch))
+            
+            scheduler.step(validationLosses[-1]) # automatic decay rate adjuster
+            
+            # calculating accuracy
+            accuracy = calculateAccuracy.compute_accuracy(model, test_review, test_score, device, batch_size) # test dataset/accuracy
+            accuracyList.append(accuracy) # test dataset/accuracy)
+        
+        
         
         # checking for overfitting to stop model (loops is a counter now)
-        if epochs > 100:
-            currAvg = sum(validationLosses[-20:]) / 20
-            prevAvg = sum(validationLosses[-50:-20]) / 30
-            if currAvg > prevAvg + 0.04: # float is the buffer between the averages
-                print(f'training completed {epochs} loops trained in {str(datetime.timedelta(seconds=round(int(time.time()-startTime), 2)))}')
+        if epochs + previousTrainingLoops > 20:
+            currAvg = sum(validationLosses[-5:]) / 5
+            prevAvg = sum(validationLosses[-15:-5]) / 10
+            print("currAvg:", currAvg, "\nprevAvg:", prevAvg)
+            if currAvg > prevAvg + 0.008: # float is the buffer between the averages
+                print(f'training completed {epochs - 1} loops trained in {str(datetime.timedelta(seconds=round(int(time.time()-startTime), 2)))}')
                 break
 
         emailRegularity = 20
@@ -69,6 +80,7 @@ def training_loop(model, optimizer, padding, updated_score, val_review, val_scor
     'loops': epochs + previousTrainingLoops,
     'trainingLosses': trainingLosses,
     'validationLosses': validationLosses,
+    'accuracyList': accuracyList,
     'batchSize': batch_size
     }
     return checkpoint

@@ -16,8 +16,8 @@ def loadCheckpoint(model, optimizer, device):
     while True:
         try:
             modelName = input("File name: ")
-            
-            checkpoint = torch.load(modelName, map_location = device, weights_only=True) # map_location is where the storage should be remapped to
+            torch.serialization.add_safe_globals([modelName])
+            checkpoint = torch.load(modelName, map_location = device, weights_only=False) # map_location is where the storage should be remapped to
             break
         except FileNotFoundError:
             print(f"{modelName} is not a valid file, please try again")
@@ -27,7 +27,6 @@ def loadCheckpoint(model, optimizer, device):
     optimizer.load_state_dict(checkpoint['optimizer'])
     trainingLosses = checkpoint.get('trainingLosses', []) # saves an empty list if losses is missing
     validationLosses = checkpoint.get('validationLosses', [])
+    accuracyList = checkpoint.get('accuracyList', [])
     numTrainingLoops = checkpoint.get('loops', 0)
-    # print("accuracy list:", accuracyList)
-    # print("losses:", losses)
-    return model, optimizer, trainingLosses, validationLosses, numTrainingLoops
+    return model, optimizer, trainingLosses, validationLosses, numTrainingLoops, accuracyList

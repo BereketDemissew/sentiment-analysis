@@ -1,10 +1,19 @@
 import matplotlib.pyplot as plt  # pip install -U matplotlib
 import glob
 
-def makeLinearGraph(train_loss, val_loss):
+def makeLinearGraph(train_loss, val_loss, accuracy):
     loops = len(train_loss)
     # Determine step based on the num training loops
-    steps = loops // 17
+    if loops > 400:
+        steps = 50
+    elif loops < 10:
+        steps = 1
+    elif loops > 200:
+        steps = 20
+    # elif loops > 10:
+    #     step = 10
+    else:
+        steps = 10
     
     # Create a list of indices and ensure the final index is included
     epochs = list(range(1, loops + 1, steps))
@@ -16,10 +25,11 @@ def makeLinearGraph(train_loss, val_loss):
 
     # Plot training and validation loss
     plt.plot(epochs, [train_loss[i-1] for i in epochs], 'b--', label='Training Loss')
-    plt.plot(epochs, [val_loss[i-1] for i in epochs], 'r-', label='Validation Loss')
+    plt.plot(epochs, [val_loss[i-1] for i in epochs], 'r--', label='Validation Loss')
+    plt.plot(epochs, [accuracy[i-1] for i in epochs], 'm--', label='Accuracy')
 
     # Graph title and labels
-    plt.title('Training vs. Validation Loss', fontsize=16)
+    plt.title('Training Loss, Validation Loss, Accuracy', fontsize=16)
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.xticks(epochs)

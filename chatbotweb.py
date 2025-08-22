@@ -50,7 +50,7 @@ vocab = 367809
 my_model = reviewer(vocab, 256)
 
 
-checkpoint = torch.load('model1_200loops.pth.tar', map_location=torch.device('cpu'))
+checkpoint = torch.load('model1_200loops.pth.tar', map_location=torch.device(device))
 
 
 my_model.load_state_dict(checkpoint['state_dict'])
@@ -200,4 +200,5 @@ st.title("Interactive sentiment analysis") # put something on the screen
 
 st.write('The fully trained model in the back end is ready to read, analyze, and predict based on your input.')
 testing_input(padd_width=2450, hashing=tokenizer, model=my_model)
+
 
